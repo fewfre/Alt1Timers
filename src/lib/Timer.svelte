@@ -95,7 +95,7 @@
 			</div>
 			<div class="btn-group">
 				{#if progress >= 1 && !paused}
-					<button class='btn' onclick={onStartTimer}>Restart</button>
+					<button class='btn text' onclick={onStartTimer}>Restart</button>
 				{:else}
 					<button class='btn' onclick={onTogglePause}>{#if paused}<PlayIcon size={13} />{:else}<PauseIcon size={13} />{/if}</button>
 					<button class='btn' onclick={onStartTimer}><RefreshIcon size={13} /></button>
@@ -117,6 +117,7 @@
         z-index: 1;
         display:grid;
         grid-template-columns: 1fr auto 1fr;
+        align-items: center;
         gap: 6px;
         width: 100%; height:100%;
         padding: 4px 4px 4px 6px;
@@ -166,7 +167,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding:2px 4px;
+        padding:0 4px;
+		height: 20px;
         
         color:#000;
         font-size:13px;
