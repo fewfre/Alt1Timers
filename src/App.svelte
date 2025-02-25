@@ -61,11 +61,8 @@
 	<main>
 		{#if !window.alt1}
 			<div class="alert">
-				This webapp is designed to be used in the 
-				<!-- svelte-ignore a11y_invalid_attribute -->
-				<a href="#" onclick={()=>window.open("https://runeapps.org/alt1")}>Alt1 Toolkit</a>. If alt1 is installed 
-				<!-- svelte-ignore a11y_invalid_attribute -->
-				<a href="#" onclick={()=>window.open("alt1://addapp/https://projects.fewfre.com/runescape/alt1-timers/appconfig.json")}>click here</a> to add this app, or paste this url into the alt1 browser and click "Add app" on the url bar.
+				This webapp is designed to be used in the <a href="https://runeapps.org/alt1" target="_blank">Alt1 Toolkit</a>.
+				If alt1 is installed <a href="alt1://addapp/https://projects.fewfre.com/runescape/alt1-timers/appconfig.json" target="_blank">click here</a> to add this app, or paste this url into the alt1 browser and click "Add app" on the url bar.
 			</div>
 		{/if}
 		<ul class="timers-list">
