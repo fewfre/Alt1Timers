@@ -12,5 +12,5 @@
 	"maxHeight": 2000,
 	"requestHandlers": [ ],
 	"activators": [ ],
-	"permissions": "none"
+	"permissions": "overlay"
 }

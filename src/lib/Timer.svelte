@@ -3,47 +3,20 @@
     import EditIcon from "../assets/EditIcon.svg.svelte";
     import PauseIcon from "../assets/PauseIcon.svg.svelte";
     import PlayIcon from "../assets/PlayIcon.svg.svelte";
-import RefreshIcon from "../assets/RefreshIcon.svg.svelte";
+	import RefreshIcon from "../assets/RefreshIcon.svg.svelte";
+    import { millisecondsToHourMinutes } from "../utils/utils";
 
     interface Props {
         data: TimerData;
         onDeleteTimer: (id:string) => void;
         onUpdateTimer: (data:TimerData) => void;
+        onOpenEditForm: (data:TimerData) => void;
         onTimerFinished: (data:TimerData) => void;
     }
-	let { data, onDeleteTimer, onUpdateTimer, onTimerFinished } : Props = $props();
+	let { data, onDeleteTimer, onUpdateTimer, onOpenEditForm, onTimerFinished } : Props = $props();
 	const { id, name, start, length, paused } = $derived(data);
 	let progress : number = $state(0);
     
-    // svelte-ignore state_referenced_locally - ok to ignore this since I only care about this check during first render
-	let mode : 'view' | 'edit' = $state(length === 0 ? 'edit' : 'view');
-    
-	let edit_name : string = $state('');
-	let edit_hours : number = $state(0);
-	let edit_minutes : number = $state(0);
-    
-    const onStartEditMode = (milliSeconds:number) => {
-        const { hours, minutes } = millisecondsToHourMinutes(milliSeconds);
-        edit_name = name;
-        edit_hours = hours;
-        edit_minutes = minutes;
-        mode = "edit";
-    };
-    // svelte-ignore non_reactive_update - don't care about detecting changes
-    let minutesInput:HTMLInputElement;
-    const onSave = (e:SubmitEvent) => {
-        if(edit_hours+edit_minutes <= 0) {
-            minutesInput.setCustomValidity("Must have a total time greater than 0");
-            minutesInput.reportValidity();
-            e.preventDefault()
-            return;
-        }
-        
-        const newLength = (((edit_hours) * 60) + edit_minutes) * 60 * 1000;
-        const restart = start===0 || Date.now() > start+newLength;
-        onUpdateTimer({ ...data, name:edit_name, start:restart ? Date.now() : start, length:newLength, paused:undefined });
-        mode = "view";
-    };
     const onTogglePause = () => {
         if(paused) {
             onUpdateTimer({ ...data, paused:undefined, start:start + (Date.now() - paused) });
@@ -54,17 +27,6 @@ import RefreshIcon from "../assets/RefreshIcon.svg.svelte";
     const onStartTimer = () => {
         onUpdateTimer({ ...data, start:Date.now(), paused:undefined });
     };
-    
-    function millisecondsToHourMinutes(milliSeconds:number) {
-        // let days = Math.floor(milliSeconds/(86400 * 1000));
-        // milliSeconds -= days*(86400*1000);
-        let hours = Math.floor(milliSeconds/(60 * 60 * 1000 ));
-        milliSeconds -= hours * (60 * 60 * 1000);
-        let minutes = Math.floor(milliSeconds/(60 * 1000));
-        milliSeconds -= minutes * (60 * 1000);
-        let seconds = Math.floor(milliSeconds/1000);
-        return { hours, minutes, seconds };
-    }
     
     function updateTimerVisuals() {
         const now = Date.now();
@@ -100,10 +62,6 @@ import RefreshIcon from "../assets/RefreshIcon.svg.svelte";
         // ].filter(s=>!!s).join(" ");
     }
     
-    function clearMinutesValidation() {
-        minutesInput.setCustomValidity("");
-    }
-    
 	$effect(() => {
         updateTimerVisuals();
 		const interval = setInterval(() => {
@@ -112,61 +70,40 @@ import RefreshIcon from "../assets/RefreshIcon.svg.svelte";
 		}, 500);
 		return () => { clearInterval(interval); };
 	});
+	
 </script>
 
-{#if mode === 'view'}
-    <div class={["timer", { "complete": !paused && progress >= 1 }]}>
-        <div class='progressbar-fill' style={`width:${paused ? 0 : (progress)*100}%`}></div>
-        <div class='timer-tray'>
-            <div class="info">
-                {#if name}
-                    <span class="hide-on-timer-hover">{name}</span>
-                    <span class="show-on-timer-hover"><span class="timestamp">{getInitialTimestamp(length)}</span></span>
-                {:else}
-                <span class="timestamp">{getInitialTimestamp(length)}</span>
-                {/if}
-            </div>
-            <div class="countdown">
-                <span class="timestamp">{paused ? "PAUSED" : progress === 1 ? "DONE" : getCountdownTimestamp(length*(1-progress))}</span>
-            </div>
-            <div class="actions">
-               <div class="btn-group">
-                    <button class='btn red-text show-on-timer-hover' onclick={()=>onDeleteTimer(id)}><CloseIcon size={13} /></button>
-                    <button class='btn show-on-timer-hover' onclick={()=>onStartEditMode(length)}><EditIcon size={13} /></button>
-                </div>
-                <div class="btn-group">
-                    {#if progress < 1 || paused}
-                        <button class='btn' onclick={onTogglePause}>{#if paused}<PlayIcon size={13} />{:else}<PauseIcon size={13} />{/if}</button>
-                    {/if}
-                    <button class='btn' onclick={onStartTimer}><RefreshIcon size={13} /></button>
-               </div>
-            </div>
-        </div>
-    </div>
-{:else if mode === 'edit'}
-    <div class="timer">
-        <form class='edit-grid' onsubmit={onSave}>
-            <div>
-                <!-- svelte-ignore a11y_label_has_associated_control -->
-                <label>Name</label>
-                <input type="text" placeholder="Timer" bind:value={edit_name} />
-            </div>
-            <div class="edit-time-grid">
-                <!-- svelte-ignore a11y_label_has_associated_control -->
-                <label>Hours</label>
-                <input type="number" step="1" min="0" bind:value={edit_hours} oninput={()=>clearMinutesValidation()} />
-                <!-- svelte-ignore a11y_label_has_associated_control -->
-                <label>Minutes</label>
-                <input type="number" step="1" min="0" bind:value={edit_minutes} bind:this={minutesInput} oninput={()=>clearMinutesValidation()} />
-            </div>
-            <div class="edit-grid-actions">
-                <div></div>
-                <button class='btn' type="submit">Save</button>
-                <div><button class='btn' type="button" onclick={length > 0 ? ()=>{ mode = 'view'; } : ()=>onDeleteTimer(id)}>Cancel</button></div>
-            </div>
-        </form>
-    </div>
-{/if}
+<div class={["timer", { "complete": !paused && progress >= 1 }]}>
+	<div class='progressbar-fill' style={`width:${paused ? 0 : (progress)*100}%`}></div>
+	<div class='timer-tray'>
+		<div class="info">
+			{#if name}
+				<span class="hide-on-timer-hover">{name}</span>
+				<span class="show-on-timer-hover"><span class="timestamp">{getInitialTimestamp(length)}</span></span>
+			{:else}
+			<span class="timestamp">{getInitialTimestamp(length)}</span>
+			{/if}
+		</div>
+		<div class="countdown">
+			<span class="timestamp">{paused ? "PAUSED" : progress === 1 ? "DONE" : getCountdownTimestamp(length*(1-progress))}</span>
+		</div>
+		<div class="actions">
+			<div class="btn-group">
+				<button class='btn red-text show-on-timer-hover' onclick={()=>onDeleteTimer(id)}><CloseIcon size={13} /></button>
+				<!-- <button class='btn show-on-timer-hover' onclick={()=>onStartEditMode(length)}><EditIcon size={13} /></button> -->
+				<button class='btn show-on-timer-hover' onclick={()=>onOpenEditForm(data)}><EditIcon size={13} /></button>
+			</div>
+			<div class="btn-group">
+				{#if progress >= 1 && !paused}
+					<button class='btn' onclick={onStartTimer}>Restart</button>
+				{:else}
+					<button class='btn' onclick={onTogglePause}>{#if paused}<PlayIcon size={13} />{:else}<PauseIcon size={13} />{/if}</button>
+					<button class='btn' onclick={onStartTimer}><RefreshIcon size={13} /></button>
+				{/if}
+			</div>
+		</div>
+	</div>
+</div>
 
 <style>
     .timer {
@@ -222,37 +159,6 @@ import RefreshIcon from "../assets/RefreshIcon.svg.svelte";
         height:100%;
         background:#777;
         border-radius:4px;
-    }
-    
-    .edit-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 4px 6px;
-        padding: 1px 4px;
-        width: 100%;
-        
-        label { color: #DDD; }
-        input { width: 100%; box-sizing: border-box; }
-        
-        .edit-time-grid {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 2px 4px;
-            width: 100%;
-        }
-        
-        .edit-grid-actions {
-            grid-column: span 2;
-            display:grid;
-            grid-template-columns: 1fr 40% 1fr;
-            justify-content: center;
-            gap: 3px;
-            
-            *:last-child {
-                display: flex;
-                justify-content: end;
-            }
-        }
     }
     
     .btn {

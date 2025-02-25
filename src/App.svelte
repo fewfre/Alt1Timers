@@ -1,6 +1,9 @@
 <script lang="ts">
+    import { onDestroy } from 'svelte'
 	import Timer from './lib/Timer.svelte';
     import { timersLocalStorage } from './utils/local-storage-helpers';
+    import { ComponentWindow } from './utils/ComponentWindow';
+    import TimerEditForm from './lib/TimerEditForm.svelte';
 	
 	let timers: TimerData[] = $state(timersLocalStorage.get())
 	
@@ -23,16 +26,51 @@
 		// alert(`TIMER! ${data.name}`);
 	};
 	const onAddTimer = () => {
-		timers.push({ id:`id${Date.now()}`, name:'', start:0, length:0 });
+		// timers.push({ id:`id${Date.now()}`, name:'', start:0, length:0 });
+		openTimerEditForm(true, { id:`id${Date.now()}`, name:'', start:0, length:0 });
 		// Don't save it until the user finalizes it in a later step
 	};
+	const onOpenEditForm = (data:TimerData) => {
+		openTimerEditForm(false, data);
+	};
+
+	//////////////////////
+	// Popup Window Controller
+	//////////////////////
+	let componentWindow = new ComponentWindow()
+	onDestroy(() => componentWindow.destroy())
+	// $: if (component) component.$set({ value })
+
+	async function openTimerEditForm(isNew:boolean, data:TimerData) {
+		if (componentWindow.isOpened) { componentWindow.focus(); }
+		else { await componentWindow.openWindow(isNew ? "Add timer" : "Edit Timer", 400, 100); }
+		
+		const onSubmit = (data:TimerData) => {
+			if(isNew) { timers.push(data); }
+			else { onUpdateTimer(data); }
+			componentWindow.closeWindow();
+		};
+		
+		const onCancel = () => componentWindow.closeWindow();
+		
+		componentWindow.mountComponent(TimerEditForm, { props:{ data, onSubmit, onCancel } });
+	}
 </script>
 
 <div>
 	<main>
+		{#if !window.alt1}
+			<div class="alert">
+				This webapp is designed to be used in the 
+				<!-- svelte-ignore a11y_invalid_attribute -->
+				<a href="#" onclick={()=>window.open("https://runeapps.org/alt1")}>Alt1 Toolkit</a>. If alt1 is installed 
+				<!-- svelte-ignore a11y_invalid_attribute -->
+				<a href="#" onclick={()=>window.open("alt1://addapp/https://projects.fewfre.com/runescape/alt1-timers/appconfig.json")}>click here</a> to add this app, or paste this url into the alt1 browser and click "Add app" on the url bar.
+			</div>
+		{/if}
 		<ul class="timers-list">
 			{#each timers as timer}
-				<li><Timer data={timer} {...{ onDeleteTimer, onUpdateTimer, onTimerFinished }} /></li>
+				<li><Timer data={timer} {...{ onDeleteTimer, onUpdateTimer, onOpenEditForm, onTimerFinished }} /></li>
 			{/each}
 			{#if !addTimerDisabled}
 				<li class="add-timer-wrapper">
@@ -105,5 +143,13 @@
 			right: 0;
 			opacity: 1;
 		}
+	}
+	
+	.alert {
+		margin: 9px 10px 4px;
+		padding: 3px 5px;
+		background: navy;
+		border: 1px solid #DDD;
+		border-radius: 3px;
 	}
 </style>
