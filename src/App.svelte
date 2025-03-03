@@ -18,6 +18,10 @@
 		timers.splice(getTimerIndex(id), 1);
 		saveTimersToLocalStorage();
 	};
+	const onAddTimer = (data:TimerData) => {
+		timers.push(data);
+		saveTimersToLocalStorage();
+	};
 	const onUpdateTimer = (data:TimerData) => {
 		timers[getTimerIndex(data.id)] = data;
 		saveTimersToLocalStorage();
@@ -25,7 +29,7 @@
 	const onTimerFinished = (data:TimerData) => {
 		// alert(`TIMER! ${data.name}`);
 	};
-	const onAddTimer = () => {
+	const onOpenAddTimerForm = () => {
 		// timers.push({ id:`id${Date.now()}`, name:'', start:0, length:0 });
 		openTimerEditForm(true, { id:`id${Date.now()}`, name:'', start:0, length:0 });
 		// Don't save it until the user finalizes it in a later step
@@ -46,7 +50,7 @@
 		else { await componentWindow.openWindow(isNew ? "Add timer" : "Edit Timer", 400, 100); }
 		
 		const onSubmit = (data:TimerData) => {
-			if(isNew) { timers.push(data); }
+			if(isNew) { onAddTimer(data); }
 			else { onUpdateTimer(data); }
 			componentWindow.closeWindow();
 		};
@@ -71,7 +75,7 @@
 			{/each}
 			{#if !addTimerDisabled}
 				<li class="add-timer-wrapper">
-					<button class="add-timer-button" onclick={onAddTimer}><span>Add Timer</span></button>
+					<button class="add-timer-button" onclick={onOpenAddTimerForm}><span>Add Timer</span></button>
 				</li>
 			{/if}
 		</ul>
