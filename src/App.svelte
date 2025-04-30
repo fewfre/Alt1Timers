@@ -4,6 +4,8 @@
     import { timersLocalStorage } from './utils/local-storage-helpers';
     import { ComponentWindow } from './utils/ComponentWindow';
     import TimerEditForm from './lib/TimerEditForm.svelte';
+    import { getInitialTimestamp, getTitleBarCountdownTimestamp } from './utils/utils';
+	const alt1 = window.alt1;
 	
 	let timers: TimerData[] = $state(timersLocalStorage.get())
 	
@@ -28,6 +30,16 @@
 	};
 	const onTimerFinished = (data:TimerData) => {
 		// alert(`TIMER! ${data.name}`);
+		if(data.notificationOn) {
+			if(alt1) {
+				alt1?.showNotification("Alt1 Timers", `The timer "${data.name || getInitialTimestamp(data.length)}" has finished.`, '');
+			} else if("Notification" in window && Notification.permission !== "denied") {
+				(Notification.permission === "granted" ? Promise.resolve() : Notification.requestPermission()).then(()=>{
+					const notification = new Notification("Alt1 Timers", { body:`The timer "${data.name || getInitialTimestamp(data.length)}" has finished.`, icon:"icon.png" });
+					setTimeout(() => { notification.close(); }, 5000);
+				});
+			}
+		}
 	};
 	const onOpenAddTimerForm = () => {
 		// timers.push({ id:`id${Date.now()}`, name:'', start:0, length:0 });
@@ -37,6 +49,22 @@
 	const onOpenEditForm = (data:TimerData) => {
 		openTimerEditForm(false, data);
 	};
+	
+	let now = $state(Date.now()); // This `now` is also passed to each timer, which can be used in an $effect to trigger visual updates
+	$effect(() => {
+		const interval = setInterval(() => {
+			now = Date.now();
+			const titlebarEntries:string[] = [], tooltipEntries:string[] = [];
+			timers.forEach(({ name, start, length, paused, titleBarOn, cursorTooltipOn })=>{
+				if(titleBarOn && !paused) titlebarEntries.push(`${name || '⏲'} ${getTitleBarCountdownTimestamp(length*(1-Math.min((now - start) / length, 1)))}`.trim());
+				if(cursorTooltipOn && !paused && now > start+length) tooltipEntries.push(`"${name || getInitialTimestamp(length)}" timer finished`);
+			});
+			alt1?.setTitleBarText(!titlebarEntries.length ? '' : titlebarEntries.join(" ¦ "));
+			alt1?.setTooltip(!tooltipEntries.length ? '' : tooltipEntries.join('\n'));
+		}, 500);
+		return () => { clearInterval(interval); };
+	});
+	
 
 	//////////////////////
 	// Popup Window Controller
@@ -47,7 +75,7 @@
 
 	async function openTimerEditForm(isNew:boolean, data:TimerData) {
 		if (componentWindow.isOpened) { componentWindow.focus(); }
-		else { await componentWindow.openWindow(isNew ? "Add timer" : "Edit Timer", 400, 100); }
+		else { await componentWindow.openWindow(isNew ? "Add timer" : "Edit Timer", 400, 154); }
 		
 		const onSubmit = (data:TimerData) => {
 			if(isNew) { onAddTimer(data); }
@@ -61,9 +89,14 @@
 	}
 </script>
 
+<svelte:window onunload={()=>{
+	alt1?.setTitleBarText('');
+	alt1?.clearTooltip();
+}} />
+
 <div>
 	<main>
-		{#if !window.alt1}
+		{#if !alt1}
 			<div class="alert">
 				This webapp is designed to be used in the <a href="https://runeapps.org/alt1" target="_blank">Alt1 Toolkit</a>.
 				If alt1 is installed <a href="alt1://addapp/https://projects.fewfre.com/runescape/alt1-timers/appconfig.json" target="_blank">click here</a> to add this app, or paste this url into the alt1 browser and click "Add app" on the url bar.
@@ -71,7 +104,7 @@
 		{/if}
 		<ul class="timers-list">
 			{#each timers as timer}
-				<li><Timer data={timer} {...{ onDeleteTimer, onUpdateTimer, onOpenEditForm, onTimerFinished }} /></li>
+				<li><Timer data={timer} {...{ onDeleteTimer, onUpdateTimer, onOpenEditForm, onTimerFinished, now }} /></li>
 			{/each}
 			{#if !addTimerDisabled}
 				<li class="add-timer-wrapper">

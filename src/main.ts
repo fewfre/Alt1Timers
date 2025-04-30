@@ -1,8 +1,9 @@
 import { mount } from 'svelte'
 import './app.css'
 import App from './App.svelte'
+import { identifyApp } from 'alt1';
 
-if (window.alt1) window.alt1.identifyAppUrl("./appconfig.json");
+identifyApp("./appconfig.json");
 
 const app = mount(App, {
   target: document.getElementById('app')!,

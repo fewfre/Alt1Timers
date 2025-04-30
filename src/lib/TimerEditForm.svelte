@@ -1,5 +1,6 @@
 <script lang="ts">
     import { millisecondsToHourMinutes } from "../utils/utils";
+    import Switch from "./Common/Switch.svelte";
 
     interface Props {
         data: TimerData;
@@ -12,8 +13,12 @@
 	let { hours:initialHours, minutes:initialMinutes } = millisecondsToHourMinutes(data.length);
 	
 	let edit_name : string = $state(data.name);
-	let edit_hours : number = $state(initialHours);
-	let edit_minutes : number = $state(initialMinutes);
+	let edit_hours : number = $state(initialHours ?? 0);
+	let edit_minutes : number = $state(initialMinutes ?? 0);
+	
+	let edit_notificationOn : boolean = $state(!!data.notificationOn);
+	let edit_titleBarOn : boolean = $state(!!data.titleBarOn);
+	let edit_cursorTooltipOn : boolean = $state(!!data.cursorTooltipOn);
 	
     // svelte-ignore non_reactive_update - don't care about detecting changes
     let minutesInput:HTMLInputElement;
@@ -28,7 +33,13 @@
         const newLength = (((edit_hours) * 60) + edit_minutes) * 60 * 1000;
 		const start = data.start;
         const restart = start===0 || Date.now() > start+newLength;
-		onSubmit({ ...data, name:edit_name, start:restart ? Date.now() : start, length:newLength, paused:undefined });
+		onSubmit({
+			...data,
+			name:edit_name, start:restart ? Date.now() : start, length:newLength, paused:undefined,
+			notificationOn:  edit_notificationOn || undefined,
+			titleBarOn:      edit_titleBarOn || undefined,
+			cursorTooltipOn: edit_cursorTooltipOn || undefined,
+		});
     };
     
     function clearMinutesValidation() {
@@ -49,6 +60,23 @@
 		<!-- svelte-ignore a11y_label_has_associated_control -->
 		<label>Minutes</label>
 		<input type="number" step="1" min="0" bind:value={edit_minutes} bind:this={minutesInput} oninput={()=>clearMinutesValidation()} />
+	</div>
+	<div class="switches-grid">
+		<div class="switch-group">
+			<!-- svelte-ignore a11y_label_has_associated_control -->
+			<label>Notification</label>
+			<Switch bind:checked={edit_notificationOn} />
+		</div>
+		<div class="switch-group">
+			<!-- svelte-ignore a11y_label_has_associated_control -->
+			<label>Show on Titlebar</label>
+			<Switch bind:checked={edit_titleBarOn} />
+		</div>
+		<div class="switch-group">
+			<!-- svelte-ignore a11y_label_has_associated_control -->
+			<label>Cursor Tooltip</label>
+			<Switch bind:checked={edit_cursorTooltipOn} />
+		</div>
 	</div>
 	<div class="edit-grid-actions">
 		<div></div>
@@ -76,12 +104,26 @@
             width: 100%;
         }
         
+		.switch-group {
+			display: flex;
+			flex-direction: column;
+			gap: 2px;
+		}
+        .switches-grid {
+            grid-column: span 2;
+            display: flex;
+			justify-content: space-between;
+            gap: 2px 4px;
+            width: 100%;
+        }
+        
         .edit-grid-actions {
             grid-column: span 2;
             display:grid;
             grid-template-columns: 1fr 40% 1fr;
             justify-content: center;
             gap: 3px;
+			margin-top: 5px;
             
             *:last-child {
                 display: flex;

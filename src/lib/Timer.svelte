@@ -4,7 +4,7 @@
     import PauseIcon from "../assets/PauseIcon.svg.svelte";
     import PlayIcon from "../assets/PlayIcon.svg.svelte";
 	import RefreshIcon from "../assets/RefreshIcon.svg.svelte";
-    import { millisecondsToHourMinutes } from "../utils/utils";
+    import { getCountdownTimestamp, getInitialTimestamp, millisecondsToHourMinutes } from "../utils/utils";
 
     interface Props {
         data: TimerData;
@@ -12,8 +12,9 @@
         onUpdateTimer: (data:TimerData) => void;
         onOpenEditForm: (data:TimerData) => void;
         onTimerFinished: (data:TimerData) => void;
+		now: number;
     }
-	let { data, onDeleteTimer, onUpdateTimer, onOpenEditForm, onTimerFinished } : Props = $props();
+	let { data, onDeleteTimer, onUpdateTimer, onOpenEditForm, onTimerFinished, now } : Props = $props();
 	const { id, name, start, length, paused } = $derived(data);
 	let progress : number = $state(0);
     
@@ -28,47 +29,13 @@
         onUpdateTimer({ ...data, start:Date.now(), paused:undefined });
     };
     
-    function updateTimerVisuals() {
-        const now = Date.now();
+	$effect(() => {
         const timeLeft = now - start;
         let oldProgress = progress;
         progress = Math.min(timeLeft / length, 1);
         if(progress === 1 && oldProgress < 1 && oldProgress != 0) {
             onTimerFinished(data);
         }
-    }
-    
-    const formatTime = (nums:number[]) => nums.map(num=>String(num).padStart(2,'0')).join(':')
-    
-    function getInitialTimestamp(milliSeconds:number) {
-        const { hours, minutes, seconds } = millisecondsToHourMinutes(milliSeconds);
-        return [
-            !!hours && `${hours}h`,
-            !!minutes && `${minutes}m`,
-            (!!seconds || (!hours && !minutes)) && `${seconds}s`,
-        ].filter(o=>!!o).join(' ');
-        // return [
-        //     days > 0 && `${days} day${days === 1 ? '' : 's'}`,
-        //     (!!hours || !!minutes) && formatTime([hours, minutes])
-        // ].filter(s=>!!s).join(" ");
-    }
-    
-    function getCountdownTimestamp(milliSeconds:number) {
-        const { hours, minutes, seconds } = millisecondsToHourMinutes(milliSeconds);
-        return !!hours ? `${hours}h `+formatTime([minutes, seconds!]) : !!minutes ? formatTime([minutes, seconds!]) : `${seconds}s`;
-        // return [
-        //     days > 0 && `${days} day${days === 1 ? '' : 's'}`,
-        //     (!!hours || !!minutes || !!seconds) && formatTime(!!hours || !!days ? [hours, minutes, seconds!] : [minutes, seconds!])
-        // ].filter(s=>!!s).join(" ");
-    }
-    
-	$effect(() => {
-        updateTimerVisuals();
-		const interval = setInterval(() => {
-            if(paused) return;
-			updateTimerVisuals();
-		}, 500);
-		return () => { clearInterval(interval); };
 	});
 	
 </script>
