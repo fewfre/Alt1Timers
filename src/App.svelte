@@ -5,6 +5,7 @@
     import { ComponentWindow } from './utils/ComponentWindow';
     import TimerEditForm from './lib/TimerEditForm.svelte';
     import { getInitialTimestamp, getTitleBarCountdownTimestamp } from './utils/utils';
+    import Alt1ToolkitAlert from './lib/Common/Alt1ToolkitAlert.svelte';
 	const alt1 = window.alt1;
 	
 	let timers: TimerData[] = $state(timersLocalStorage.get())
@@ -97,10 +98,7 @@
 <div>
 	<main>
 		{#if !alt1}
-			<div class="alert">
-				This webapp is designed to be used in the <a href="https://runeapps.org/alt1" target="_blank">Alt1 Toolkit</a>.
-				If alt1 is installed <a href="alt1://addapp/https://projects.fewfre.com/runescape/alt1-timers/appconfig.json" target="_blank">click here</a> to add this app, or paste this url into the alt1 browser and click "Add app" on the url bar.
-			</div>
+			<Alt1ToolkitAlert appconfigUrl="https://projects.fewfre.com/runescape/alt1-timers/appconfig.json" />
 		{/if}
 		<ul class="timers-list">
 			{#each timers as timer}
@@ -177,13 +175,5 @@
 			right: 0;
 			opacity: 1;
 		}
-	}
-	
-	.alert {
-		margin: 9px 10px 4px;
-		padding: 3px 5px;
-		background: navy;
-		border: 1px solid #DDD;
-		border-radius: 3px;
 	}
 </style>
