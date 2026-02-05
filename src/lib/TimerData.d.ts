@@ -9,4 +9,5 @@ interface TimerData {
 	notificationOn?: boolean; // Will trigger a notification when timer finishes
 	titleBarOn?: boolean; // Will cause this time to appear on title bar (if not paused)
 	cursorTooltipOn?: boolean; // Will show a cursor on screen with text altering user of timer being finished
+	sound?: string;
 }

@@ -6,6 +6,7 @@
     import TimerEditForm from './lib/TimerEditForm.svelte';
     import { getInitialTimestamp, getTitleBarCountdownTimestamp } from './utils/utils';
     import Alt1ToolkitAlert from './lib/Common/Alt1ToolkitAlert.svelte';
+    import { AudioLoader } from './utils/audio';
 	const alt1 = window.alt1;
 	
 	let timers: TimerData[] = $state(timersLocalStorage.get())
@@ -40,6 +41,10 @@
 					setTimeout(() => { notification.close(); }, 5000);
 				});
 			}
+		}
+		
+		if(data.sound) {
+			AudioLoader.play(data.sound);
 		}
 	};
 	const onOpenAddTimerForm = () => {
@@ -76,7 +81,7 @@
 
 	async function openTimerEditForm(isNew:boolean, data:TimerData) {
 		if (componentWindow.isOpened) { componentWindow.focus(); }
-		else { await componentWindow.openWindow(isNew ? "Add timer" : "Edit Timer", 400, 154); }
+		else { await componentWindow.openWindow(isNew ? "Add timer" : "Edit Timer", 400, 204); }
 		
 		const onSubmit = (data:TimerData) => {
 			if(isNew) { onAddTimer(data); }

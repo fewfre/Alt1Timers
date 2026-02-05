@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { AudioLoader, presetSounds } from "../utils/audio";
     import { millisecondsToHourMinutes } from "../utils/utils";
     import Switch from "./Common/Switch.svelte";
 
@@ -19,6 +20,7 @@
 	let edit_notificationOn : boolean = $state(!!data.notificationOn);
 	let edit_titleBarOn : boolean = $state(!!data.titleBarOn);
 	let edit_cursorTooltipOn : boolean = $state(!!data.cursorTooltipOn);
+	let edit_sound : string = $state(data.sound ?? '');
 	
     // svelte-ignore non_reactive_update - don't care about detecting changes
     let minutesInput:HTMLInputElement;
@@ -39,6 +41,7 @@
 			notificationOn:  edit_notificationOn || undefined,
 			titleBarOn:      edit_titleBarOn || undefined,
 			cursorTooltipOn: edit_cursorTooltipOn || undefined,
+			sound: edit_sound || undefined,
 		});
     };
     
@@ -78,6 +81,18 @@
 			<Switch bind:checked={edit_cursorTooltipOn} />
 		</div>
 	</div>
+	<div class="volume-group">
+		<!-- svelte-ignore a11y_label_has_associated_control -->
+		<label>Audio Alarm</label>
+		<select bind:value={edit_sound} onchange={()=>{
+			if(edit_sound) AudioLoader.play(edit_sound);
+		}}>
+			<option value=''>[None]</option>
+			{#each Object.entries(presetSounds) as [key, sfx]}
+				<option value={key}>{sfx.name}</option>
+			{/each}
+		</select>
+	</div>
 	<div class="edit-grid-actions">
 		<div></div>
 		<button class='btn' type="submit">Save</button>
@@ -86,67 +101,73 @@
 </form>
 
 <style>
-    .edit-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 4px 6px;
-        padding: 6px 10px;
-        width: 100%;
+	.edit-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 4px 6px;
+		padding: 6px 10px;
+		width: 100%;
 		box-sizing: border-box;
-        
-        label { color: #DDD; }
-        input { width: 100%; box-sizing: border-box; }
-        
-        .edit-time-grid {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 2px 4px;
-            width: 100%;
-        }
-        
+		
+		label { color: #DDD; }
+		input { width: 100%; box-sizing: border-box; }
+		
+		.edit-time-grid {
+			display: grid;
+			grid-template-columns: auto 1fr;
+			gap: 2px 4px;
+			width: 100%;
+		}
+		
+		.switches-grid {
+			grid-column: span 2;
+			display: flex;
+			justify-content: space-between;
+			gap: 2px 4px;
+			width: 100%;
+		}
 		.switch-group {
 			display: flex;
 			flex-direction: column;
 			gap: 2px;
 		}
-        .switches-grid {
-            grid-column: span 2;
-            display: flex;
-			justify-content: space-between;
-            gap: 2px 4px;
-            width: 100%;
-        }
-        
-        .edit-grid-actions {
-            grid-column: span 2;
-            display:grid;
-            grid-template-columns: 1fr 40% 1fr;
-            justify-content: center;
-            gap: 3px;
+		
+		.volume-group {
+			display: flex;
+			flex-direction: column;
+			gap: 2px;
+		}
+		
+		.edit-grid-actions {
+			grid-column: span 2;
+			display:grid;
+			grid-template-columns: 1fr 40% 1fr;
+			justify-content: center;
+			gap: 3px;
 			margin-top: 5px;
-            
-            *:last-child {
-                display: flex;
-                justify-content: end;
-            }
-        }
-    }
-    
-    .btn {
-        all: unset;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding:2px 4px;
-        
-        color:#000;
-        font-size:13px;
-        background:#EAEAEA;
-        border-radius:3px;
-        cursor:pointer;
-        
-        &:hover{ background:#DDD; }
-        
-        /* svg { line-height: 0; } */
-    }
+			
+			*:last-child {
+				display: flex;
+				justify-content: end;
+			}
+		}
+	}
+
+	.btn {
+		all: unset;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding:2px 4px;
+		
+		color:#000;
+		font-size:13px;
+		background:#EAEAEA;
+		border-radius:3px;
+		cursor:pointer;
+		
+		&:hover{ background:#DDD; }
+		
+		/* svg { line-height: 0; } */
+	}
 </style>
