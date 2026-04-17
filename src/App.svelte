@@ -7,6 +7,7 @@
     import { getInitialTimestamp, getTitleBarCountdownTimestamp } from './utils/utils';
     import Alt1ToolkitAlert from './lib/Common/Alt1ToolkitAlert.svelte';
     import { AudioLoader } from './utils/audio';
+    import DragAndDropLi from './utils/DragAndDrop/DragAndDropLi.svelte';
 	const alt1 = window.alt1;
 	
 	let timers: TimerData[] = $state(timersLocalStorage.get())
@@ -28,6 +29,11 @@
 	};
 	const onUpdateTimer = (data:TimerData) => {
 		timers[getTimerIndex(data.id)] = data;
+		saveTimersToLocalStorage();
+	};
+	const onTimerIndexChanged = (draggedIndex: number, dropIndex: number) => {
+		const [draggedTimer] = timers.splice(draggedIndex, 1);
+		timers.splice(dropIndex, 0, draggedTimer);
 		saveTimersToLocalStorage();
 	};
 	const onTimerFinished = (data:TimerData) => {
@@ -106,8 +112,10 @@
 			<Alt1ToolkitAlert appconfigUrl="https://projects.fewfre.com/runescape/alt1-timers/appconfig.json" />
 		{/if}
 		<ul class="timers-list">
-			{#each timers as timer}
-				<li><Timer data={timer} {...{ onDeleteTimer, onUpdateTimer, onOpenEditForm, onTimerFinished, now }} /></li>
+			{#each timers as timer, index (timer.id)}
+				<DragAndDropLi id={timer.id} index={index} list={timers} onDrop={onTimerIndexChanged}>
+					<Timer data={timer} {...{ onDeleteTimer, onUpdateTimer, onOpenEditForm, onTimerFinished, now }} />
+				</DragAndDropLi>
 			{/each}
 			{#if !addTimerDisabled}
 				<li class="add-timer-wrapper">
