@@ -13,8 +13,9 @@
         onOpenEditForm: (data:TimerData) => void;
         onTimerFinished: (data:TimerData) => void;
 		now: number;
+		layout: 'grid' | 'list';
     }
-	let { data, onDeleteTimer, onUpdateTimer, onOpenEditForm, onTimerFinished, now } : Props = $props();
+	let { data, onDeleteTimer, onUpdateTimer, onOpenEditForm, onTimerFinished, now, layout } : Props = $props();
 	const { id, name, start, length, paused } = $derived(data);
 	let progress : number = $state(0);
     
@@ -40,13 +41,13 @@
 	
 </script>
 
-<div class={["timer", { "complete": !paused && progress >= 1 }]}>
+<div class={["timer", { "complete": !paused && progress >= 1 }, `layout-${layout}`]}>
 	<div class='progressbar-fill' style={`width:${paused ? 0 : (progress)*100}%`}></div>
 	<div class='timer-tray'>
 		<div class="info">
 			{#if name}
-				<span class="hide-on-timer-hover">{name}</span>
-				<span class="show-on-timer-hover"><span class="timestamp">{getInitialTimestamp(length)}</span></span>
+				<span class="hide-on-timer-hover name">{name}</span>
+				<span class="show-on-timer-hover name-timestamp"><span class="timestamp">{getInitialTimestamp(length)}</span></span>
 			{:else}
 			<span class="timestamp">{getInitialTimestamp(length)}</span>
 			{/if}
@@ -94,6 +95,11 @@
         .complete & {
             background: #171E2499;
         }
+		
+		/* Default is grid (above) this just tweaks it */
+		.layout-list & {
+			grid-template-columns: auto auto auto;
+		}
     }
     .timestamp {
         font-family: monospace;
@@ -106,6 +112,17 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+		
+		/* Special behavior for list layout */
+		.timer.layout-list:hover & .name {
+			display: block !important;
+		}
+		.timer.layout-list:hover & .name-timestamp {
+			position: absolute;
+			padding: 2px 6px;
+			background: #FFFFFF88;
+			transform: translateX(-8px);
+		}
     }
     .countdown {
         /* Hide countdown on hover, but only if small screen, since there's room otherwise */
@@ -119,6 +136,10 @@
         display:flex;
         justify-content: end;
         gap: 3px;
+		
+		.layout-list & {
+			flex-direction: row-reverse;
+		}
     }
     
     .progressbar-fill {

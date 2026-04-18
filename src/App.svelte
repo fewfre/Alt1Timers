@@ -1,16 +1,18 @@
 <script lang="ts">
     import { onDestroy } from 'svelte'
 	import Timer from './lib/Timer.svelte';
-    import { timersLocalStorage } from './utils/local-storage-helpers';
+    import { settingsLocalStorage, timersLocalStorage } from './utils/local-storage-helpers';
     import { ComponentWindow } from './utils/ComponentWindow';
     import TimerEditForm from './lib/TimerEditForm.svelte';
     import { getInitialTimestamp, getTitleBarCountdownTimestamp } from './utils/utils';
     import Alt1ToolkitAlert from './lib/Common/Alt1ToolkitAlert.svelte';
     import { AudioLoader } from './utils/audio';
     import DragAndDropLi from './utils/DragAndDrop/DragAndDropLi.svelte';
+    import SettingsGear from './assets/SettingsGear.svg.svelte';
 	const alt1 = window.alt1;
 	
 	let timers: TimerData[] = $state(timersLocalStorage.get())
+	let settings = $state(settingsLocalStorage.getAll());
 	
 	let addTimerDisabled = $derived(!!timers.find(t=>t.length === 0));
 	
@@ -111,15 +113,21 @@
 		{#if !alt1}
 			<Alt1ToolkitAlert appconfigUrl="https://projects.fewfre.com/runescape/alt1-timers/appconfig.json" />
 		{/if}
-		<ul class="timers-list">
+		<ul class={["timers-list", settings.listLayout]}>
 			{#each timers as timer, index (timer.id)}
 				<DragAndDropLi id={timer.id} index={index} list={timers} onDrop={onTimerIndexChanged}>
-					<Timer data={timer} {...{ onDeleteTimer, onUpdateTimer, onOpenEditForm, onTimerFinished, now }} />
+					<Timer data={timer} {...{ onDeleteTimer, onUpdateTimer, onOpenEditForm, onTimerFinished, now, layout: settings.listLayout }} />
 				</DragAndDropLi>
 			{/each}
 			{#if !addTimerDisabled}
-				<li class="add-timer-wrapper">
-					<button class="add-timer-button" onclick={onOpenAddTimerForm}><span>Add Timer</span></button>
+				<li class="meta-li">
+					<div class="add-timer-wrapper"><button class="add-timer-button" onclick={onOpenAddTimerForm}><span>Add Timer</span></button></div>
+					<div class="list-layout-container">
+						<SettingsGear size={20} />
+						<button onclick={() => settings = { ...settings, listLayout: settings.listLayout === 'grid' ? 'list' : 'grid' }}>
+							<span>{settings.listLayout === 'grid' ? 'list' : 'grid'}</span>
+						</button>
+					</div>
 				</li>
 			{/if}
 		</ul>
@@ -127,7 +135,7 @@
 </div>
 
 <style>
-	.timers-list {
+	.timers-list.grid {
 		display: grid;
 		gap: 5px 5px;
 		padding: 5px;
@@ -143,13 +151,25 @@
 			grid-template-columns: repeat(3, 1fr);
 		}
 	}
-	.add-timer-wrapper {
+	.timers-list.list {
 		display: flex;
+		flex-wrap: wrap;
+		gap: 5px;
+		padding: 5px;
+		margin: 0;
+	}
+	.meta-li {
+		display: grid;
+		grid-template-columns: 1fr auto;
 		justify-content: center;
 		padding: 5px 10px;
 		background: #FFFFFF22;
 		border: 2px solid #FFFFFF55;
 		border-radius: 4px;
+	}
+	.add-timer-wrapper {
+		display: flex;
+		justify-content: center;
 	}
 	.add-timer-button {
 		/* https://uiverse.io/mrhyddenn/afraid-skunk-10 */
@@ -187,6 +207,23 @@
 			left: 0;
 			right: 0;
 			opacity: 1;
+		}
+	}
+	.list-layout-container {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+		font-size: 14px;
+		text-transform: uppercase;
+		
+		padding-left: 5px;
+		margin-left: 15px;
+		border-left: 1px solid #FFFFFF55;
+		
+		button {
+			text-transform: capitalize;
+			padding: 0 6px;
+			cursor: pointer;
 		}
 	}
 </style>
